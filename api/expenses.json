@@ -1,0 +1,48 @@
+import fs from 'fs';
+import path from 'path';
+
+const DATA_FILE = path.join(process.cwd(), 'expenses.json');
+
+const readExpenses = () => {
+  try {
+    const data = fs.readFileSync(DATA_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch (error) {
+    return [];
+  }
+};
+
+const writeExpenses = (expenses) => {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(expenses, null, 2), 'utf-8');
+};
+
+export default function handler(req, res) {
+  if (req.method === 'GET') {
+    // Return all expenses
+    const expenses = readExpenses();
+    res.status(200).json(expenses);
+  } else if (req.method === 'POST') {
+    // Add a new expense
+    const { title, amount, date } = req.body;
+
+    if (!title || !amount || !date) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const expenses = readExpenses();
+    const newExpense = {
+      id: Date.now(),
+      title,
+      amount: parseFloat(amount),
+      date: new Date(date).toISOString(),
+    };
+
+    expenses.push(newExpense);
+    writeExpenses(expenses);
+
+    res.status(201).json(newExpense);
+  } else {
+    res.setHeader('Allow', ['GET', 'POST']);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
+  }
+}
