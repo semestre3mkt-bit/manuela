@@ -1,9 +1,0 @@
-{
-  "name": "expenses-app",
-  "version": "1.0.0",
-  "description": "Simple expenses tracker deployed on Vercel",
-  "scripts": {
-    "start": "vercel dev"
-  },
-  "dependencies": {}
-}
