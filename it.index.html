@@ -55,4 +55,186 @@ export default function handler(req, res) {
     });
   }
 }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expenses Tracker</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f6fa;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 25px;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background: #0070f3;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0059c9;
+    }
+
+    .expense-list {
+      margin-top: 20px;
+    }
+
+    .expense-item {
+      display: flex;
+      justify-content: space-between;
+      background: #eef1f7;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    .empty {
+      text-align: center;
+      color: #666;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Expenses</h1>
+
+    <!-- Form -->
+    <form id="expenseForm">
+      <input type="text" id="description" placeholder="Description" required />
+      <input type="number" id="amount" placeholder="Amount" required step="0.01" min="0" />
+      <button type="submit">Add Expense</button>
+    </form>
+
+    <!-- Expense list -->
+    <div id="expenseList" class="expense-list"></div>
+  </div>
+
+  <script>
+    const API_URL = "/api/expenses";
+
+    // Load expenses on page load
+    document.addEventListener("DOMContentLoaded", loadExpenses);
+
+    async function loadExpenses() {
+      const list = document.getElementById("expenseList");
+      list.innerHTML = "<p class='empty'>Loading...</p>";
+
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+
+        if (!data.expenses || data.expenses.length === 0) {
+          list.innerHTML = "<p class='empty'>No expenses yet.</p>";
+          return;
+        }
+
+        renderExpenses(data.expenses);
+
+      } catch (error) {
+        list.innerHTML = "<p class='empty'>Error loading expenses.</p>";
+      }
+    }
+
+    function renderExpenses(expenses) {
+      const list = document.getElementById("expenseList");
+      list.innerHTML = "";
+
+      expenses.forEach(exp => {
+        const div = document.createElement("div");
+        div.className = "expense-item";
+        div.innerHTML = `
+          <span>${exp.description}</span>
+          <strong>$${exp.amount}</strong>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    // Submit form
+    document.getElementById("expenseForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const description = document.getElementById("description").value.trim();
+      const amount = parseFloat(document.getElementById("amount").value);
+
+      if (!description || isNaN(amount)) {
+        alert("Please complete the form.");
+        return;
+      }
+
+      const expense = {
+        description,
+        amount,
+        category: "general",
+        date: new Date().toISOString().split("T")[0]
+      };
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(expense)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert("Error: " + data.message);
+          return;
+        }
+
+        // Reload and update dynamically
+        loadExpenses();
+
+        // Clear form
+        document.getElementById("expenseForm").reset();
+
+      } catch (error) {
+        alert("Network error while adding expense.");
+      }
+    });
+  </script>
+</body>
+</html>
+
 
